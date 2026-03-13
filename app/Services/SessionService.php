@@ -15,7 +15,7 @@ class SessionService
 
         $accessToken = $user->createToken(
             $deviceName,
-            ['*'],
+            ['question:write', 'comment:write'],
             $expiresAt
         )->plainTextToken;
 

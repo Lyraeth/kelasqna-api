@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -49,6 +51,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'avatar',
+        'class_name',
+        'class_number',
+        'subject',
     ];
 
     /**
@@ -72,5 +79,48 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->role === 'teacher';
+    }
+
+    public function getDisplayRoleAttribute(): string
+    {
+        if ($this->isTeacher()) {
+            return ($this->subject ? $this->subject : '');
+        }
+
+        $parts = array_filter([$this->class_name, $this->class_number ? $this->class_number : null]);
+
+        return implode(' · ', $parts);
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    public function likedQuestions(): BelongsToMany
+    {
+        return $this->belongsToMany(Question::class, 'question_likes')
+            ->withTimestamps();
+    }
+
+    public function bookmarkedQuestions(): BelongsToMany
+    {
+        return $this->belongsToMany(Question::class, 'question_bookmarks')
+            ->withTimestamps();
     }
 }

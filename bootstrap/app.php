@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         //
+        $middleware->alias([
+            'ability'      => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'abilities'    => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
 
