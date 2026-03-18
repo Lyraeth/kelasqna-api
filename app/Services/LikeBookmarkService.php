@@ -5,6 +5,8 @@ namespace App\Services;
 
 use App\Models\Question;
 use App\Models\User;
+use App\Notifications\BookmarkNotification;
+use App\Notifications\LikeNotification;
 
 class LikeBookmarkService
 {
@@ -19,6 +21,20 @@ class LikeBookmarkService
             $question->likes()->detach($user->id);
         } else {
             $question->likes()->attach($user->id);
+        }
+
+        // ✅ !$isLiked = baru di-like, bukan unlike
+        if (!$isLiked && $question->user_id !== $user->id) {
+            $question->loadMissing('author');
+
+            app(FcmService::class)->sendToUser(
+                $question->author,  // ✅ bukan ->user
+                'Pertanyaan Kamu Disukai',
+                "{$user->name} menyukai pertanyaan kamu.",
+                ['type' => 'like', 'question_id' => (string) $question->id]
+            );
+
+            $question->author->notify(new LikeNotification($user, $question));
         }
 
         return [
@@ -40,9 +56,23 @@ class LikeBookmarkService
             $question->bookmarks()->attach($user->id);
         }
 
+        // ✅ !$isBookmarked = baru di-bookmark, bukan un-bookmark
+        if (!$isBookmarked && $question->user_id !== $user->id) {
+            $question->loadMissing('author');
+
+            app(FcmService::class)->sendToUser(
+                $question->author,  // ✅ bukan ->user
+                'Pertanyaan Kamu Di-bookmark',
+                "{$user->name} mem-bookmark pertanyaan kamu.",
+                ['type' => 'bookmark', 'question_id' => (string) $question->id]
+            );
+
+            $question->author->notify(new BookmarkNotification($user, $question));
+        }
+
         return [
-            'bookmarked'       => !$isBookmarked,
-            'bookmarks_count'  => $question->bookmarks()->count(),
+            'bookmarked'      => !$isBookmarked,
+            'bookmarks_count' => $question->bookmarks()->count(),
         ];
     }
 

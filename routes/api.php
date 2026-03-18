@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\Comment\CommentController;
+use App\Http\Controllers\Api\Notification\DeviceTokenController;
+use App\Http\Controllers\Api\Notification\NotificationController;
 use App\Http\Controllers\Api\Question\LikeBookmarkController;
 use App\Http\Controllers\Api\Question\QuestionController;
 use App\Http\Controllers\Api\Session\SessionController;
@@ -30,6 +32,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/sessions',    [SessionController::class, 'devices']);
     Route::delete('/sessions', [SessionController::class, 'revokeSession']);
+
+    Route::post('/device-tokens',          [DeviceTokenController::class, 'store']);
+    Route::delete('/device-tokens',        [DeviceTokenController::class, 'destroy']);
+
+    Route::get('/notifications',           [NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     // Question write: butuh token dengan ability 'question:write'
     Route::middleware('ability:question:write')->group(function () {

@@ -123,4 +123,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Question::class, 'question_bookmarks')
             ->withTimestamps();
     }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }

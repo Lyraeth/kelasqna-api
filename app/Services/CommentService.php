@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Models\Comment;
 use App\Models\Question;
+use App\Notifications\CommentNotification;
 use Illuminate\Support\Facades\Auth;
 
 class CommentService
@@ -19,7 +20,27 @@ class CommentService
             'content' => $data['content'],
         ]);
 
-        return $comment->load('author');
+        $comment->load('author');
+
+        if ($question->user_id !== Auth::id()) {
+            if (!$question->relationLoaded('author')) {
+                $question->load('author');
+            }
+
+            $questionOwner = $question->author;
+            $commentOwnerName = $comment->author->name;
+
+            app(FcmService::class)->sendToUser(
+                $questionOwner,
+                'Komentar Baru',
+                "{$commentOwnerName} mengomentari pertanyaan kamu.",
+                ['type' => 'comment', 'question_id' => (string) $question->id]
+            );
+
+            $questionOwner->notify(new CommentNotification($comment));
+        }
+
+        return $comment;
     }
 
     /**
